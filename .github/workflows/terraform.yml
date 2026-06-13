@@ -18,37 +18,37 @@ jobs:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION: us-east-1        # ADDED - required by AWS provider
+      AWS_DEFAULT_REGION: us-east-1
 
     steps:
       # Checkout the code from the repository
       - name: Checkout Code
-        uses: actions/checkout@v4          # FIXED - was v2
+        uses: actions/checkout@v4.2.2       # FIXED - Node 22
 
       # Install Terraform
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3 # FIXED - was v1
+        uses: hashicorp/setup-terraform@v3.1.2  # FIXED - Node 22
         with:
-          terraform_version: 1.9.0         # FIXED - was 1.0.0
+          terraform_version: 1.9.0
 
       # Initialize Terraform
       - name: Initialize Terraform
-        run: terraform init                 # FIXED - comment typo
+        run: terraform init
 
       # Check Terraform formatting
-      - name: Format Check                  # ADDED - missing best practice
+      - name: Format Check
         run: terraform fmt -check
         continue-on-error: true
 
       # Validate Terraform Configuration for errors
       - name: Validate Terraform Configuration
-        run: terraform validate             # FIXED - comment typo
+        run: terraform validate
 
       # Show execution plan and save to file
       - name: Plan Terraform Deployment
-        run: terraform plan -out=tfplan     # FIXED - added -out flag
+        run: terraform plan -out=tfplan
 
       # Apply only on push to main, not on pull requests
       - name: Apply Terraform Deployment
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'  # ADDED - safety guard
-        run: terraform apply -auto-approve tfplan  # FIXED - typo + uses saved plan
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
