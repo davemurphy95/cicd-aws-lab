@@ -15,8 +15,8 @@ jobs:
 
   # Environment Variables
     env:
-      TF_VAR_aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }} # AWS Access Key ID
-      TF_VAR_aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # AWS Secret Access Key
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }} # AWS Access Key ID
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # AWS Secret Access Key
 
     steps:
       # Checkout the code from the repository
@@ -34,14 +34,14 @@ jobs:
       - name: Initialize Terraform
         run: terraform init
 
-      # Validate Terraofrm Configuration for errors
+      # Validate Terraform Configuration for errors
 
-      - name: Validate Terraofrm Configuraiton
+      - name: Validate Terraform Configuraiton
         run: terraform validate
 
       # Show execution plan
 
-      - name: Plan Terraofrm Deployment
+      - name: Plan Terraform Deployment
         run:  terraform plan
 
       # Apply the Terraofrm configuraiton on Push or pull request

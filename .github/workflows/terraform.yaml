@@ -1,0 +1,67 @@
+name: Deploy AWS Infrastructure with Terraform
+
+# Trigger the workflow on push or pull request to the main branch
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  terraform:
+    name: Infrastructure Deployment on AWS
+    runs-on: ubuntu-latest
+
+    # Environment Variables
+    env:
+      TF_VAR_aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      TF_VAR_aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-1
+
+    steps:
+      # Step 1 - Checkout the code from the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2 - Install Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      # Step 3 - Verify Terraform version
+      - name: Terraform Version
+        run: terraform version
+
+      # Step 4 - Initialize Terraform (downloads providers/modules)
+      - name: Terraform Init
+        run: terraform init
+
+      # Step 5 - Check formatting
+      - name: Terraform Format Check
+        run: terraform fmt -check
+        continue-on-error: true
+
+      # Step 6 - Validate configuration syntax
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Step 7 - Show execution plan (what will be created/changed/destroyed)
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+        
+      # Step 8 - Upload plan as artifact for review
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v3
+        with:
+          name: tfplan
+          path: tfplan
+
+      # Step 9 - Apply only on push to main (not on pull requests)
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
