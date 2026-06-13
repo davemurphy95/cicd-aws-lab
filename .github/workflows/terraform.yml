@@ -1,53 +1,54 @@
 name: Deploy AWS Infrastructure with Terraform
+
 # Trigger the workflow on push or pull request to the main branch
 on:
-    push:
-      branches:
-        - main
-    pull_request:
-      branches:
-        - main
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   terraform:
-    name: Infrastructure Deployment on AWS  # Name of the Job
-    runs-on: ubuntu-latest      # The type of runner to use
+    name: Infrastructure Deployment on AWS
+    runs-on: ubuntu-latest
 
-  # Environment Variables
+    # Environment Variables
     env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }} # AWS Access Key ID
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # AWS Secret Access Key
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-1        # ADDED - required by AWS provider
 
     steps:
       # Checkout the code from the repository
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4          # FIXED - was v2
 
       # Install Terraform
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v3 # FIXED - was v1
         with:
-          terraform_version: 1.0.0
+          terraform_version: 1.9.0         # FIXED - was 1.0.0
 
-      # Iniatilze Terraform
-
+      # Initialize Terraform
       - name: Initialize Terraform
-        run: terraform init
+        run: terraform init                 # FIXED - comment typo
+
+      # Check Terraform formatting
+      - name: Format Check                  # ADDED - missing best practice
+        run: terraform fmt -check
+        continue-on-error: true
 
       # Validate Terraform Configuration for errors
+      - name: Validate Terraform Configuration
+        run: terraform validate             # FIXED - comment typo
 
-      - name: Validate Terraform Configuraiton
-        run: terraform validate
-
-      # Show execution plan
-
+      # Show execution plan and save to file
       - name: Plan Terraform Deployment
-        run:  terraform plan
+        run: terraform plan -out=tfplan     # FIXED - added -out flag
 
-      # Apply the Terraofrm configuraiton on Push or pull request
-
+      # Apply only on push to main, not on pull requests
       - name: Apply Terraform Deployment
-        run: terraofrm apply -auto-approve
-
-
-
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'  # ADDED - safety guard
+        run: terraform apply -auto-approve tfplan  # FIXED - typo + uses saved plan
