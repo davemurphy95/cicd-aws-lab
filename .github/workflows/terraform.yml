@@ -1,6 +1,5 @@
 name: Deploy AWS Infrastructure with Terraform
 
-# Trigger the workflow on push or pull request to the main branch
 on:
   push:
     branches:
@@ -9,46 +8,42 @@ on:
     branches:
       - main
 
+# Force Node 24 globally for all actions in this workflow
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true        # ADDED - Node 24 fix
+
 jobs:
   terraform:
     name: Infrastructure Deployment on AWS
     runs-on: ubuntu-latest
 
-    # Environment Variables
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: us-east-1
 
     steps:
-      # Checkout the code from the repository
       - name: Checkout Code
-        uses: actions/checkout@v4.2.2       # FIXED - Node 22
+        uses: actions/checkout@v4.2.2
 
-      # Install Terraform
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3.1.2  # FIXED - Node 22
+        uses: hashicorp/setup-terraform@v3.1.2
         with:
           terraform_version: 1.9.0
 
-      # Initialize Terraform
       - name: Initialize Terraform
         run: terraform init
 
-      # Check Terraform formatting
       - name: Format Check
         run: terraform fmt -check
         continue-on-error: true
 
-      # Validate Terraform Configuration for errors
       - name: Validate Terraform Configuration
         run: terraform validate
 
-      # Show execution plan and save to file
       - name: Plan Terraform Deployment
         run: terraform plan -out=tfplan
 
-      # Apply only on push to main, not on pull requests
       - name: Apply Terraform Deployment
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve tfplan
